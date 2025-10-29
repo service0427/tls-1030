@@ -1,0 +1,8 @@
+# Core dependencies
+nodriver>=0.35
+curl-cffi>=0.13.0
+pymysql>=1.1.0
+python-dotenv>=1.0.0
+
+# Optional: For better performance
+psutil>=5.9.0

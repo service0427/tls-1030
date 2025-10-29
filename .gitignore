@@ -1,0 +1,35 @@
+# Environment variables (contains DB passwords)
+.env
+
+# User data directories (Chrome profiles)
+user/
+
+# Output directories (temporary files)
+output/
+cookies/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Backup files
+*.bak
+*.tmp
