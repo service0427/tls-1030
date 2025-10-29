@@ -121,10 +121,17 @@ class DbManager:
 
     def get_latest_fingerprint(self):
         """
-        Get latest TLS fingerprint and cookies from database
+        Get latest TLS fingerprint and its most recent cookies from database
+
+        Logic:
+        - Gets the latest TLS fingerprint by collected_at
+        - For that fingerprint, gets the most recent cookies (browser or crawled)
+        - Crawled cookies are preferred for a given fingerprint (more up-to-date)
+        - Fresh browser cookies are used when a new fingerprint is collected
 
         Returns:
             dict: {
+                'tls_fingerprint_id': int,
                 'device_name': str,
                 'tls_data': dict,
                 'http2_data': dict,
@@ -171,6 +178,7 @@ class DbManager:
                 return None
 
             return {
+                'tls_fingerprint_id': tls_fingerprint_id,
                 'device_name': tls_row['device_name'],
                 'tls_data': json.loads(tls_row['tls_data']),
                 'http2_data': json.loads(tls_row['http2_data']),

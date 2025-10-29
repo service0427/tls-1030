@@ -6,7 +6,6 @@ user/
 
 # Output directories (temporary files)
 output/
-cookies/
 
 # Python cache
 __pycache__/

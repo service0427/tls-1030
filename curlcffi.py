@@ -2,9 +2,9 @@
 curl-cffi Multi-Page Crawler
 - Loads latest TLS fingerprint and cookies from database
 - Crawls multiple pages using curl-cffi with extra_fp
-- Uses Session for automatic cookie management (like curl --cookie-jar)
+- Uses Session for automatic cookie management
 - Saves HTML/RSC responses to output directory
-- Saves updated cookies to DB and cookie jar file
+- Saves updated cookies to database
 """
 
 import sys
@@ -120,25 +120,18 @@ def crawl_multipage(keyword="노트북", max_pages=3):
     print(f"  TLS version: {data['tls_data'].get('tls_version')}")
     print(f"  extra_fp: {extra_fp}")
 
-    # Setup cookie jar file
-    cookie_jar_dir = Path(__file__).parent / 'cookies'
-    cookie_jar_dir.mkdir(exist_ok=True)
-
-    # Get version for filename (e.g., "136", "system")
-    version_str = chrome_version.split('.')[0] if '.' in chrome_version else chrome_version
-    cookie_jar_file = cookie_jar_dir / f'{version_str}.txt'
-
-    # Initialize cookie jar (reset on each run)
-    if cookie_jar_file.exists():
-        cookie_jar_file.unlink()
-        print(f"  Cookie jar reset: {cookie_jar_file}")
-    else:
-        print(f"  Cookie jar created: {cookie_jar_file}")
-
     # Create Session for automatic cookie management
     session = requests.Session()
-    session.cookies.update(cookie_dict)
+
+    # Properly set cookies using response.cookies format (curl-cffi compatible)
+    # Convert dict to cookies and add to session
+    for name, value in cookie_dict.items():
+        session.cookies.set(name, value, domain='.coupang.com', path='/')
+
     print(f"  Session initialized with {len(cookie_dict)} cookies")
+
+    # Debug: Show initial cookies
+    print(f"  Initial cookies: {', '.join(list(cookie_dict.keys())[:5])}{'...' if len(cookie_dict) > 5 else ''}")
 
     # Start crawling
     print(f"\n[3/3] Crawling {max_pages} pages...")
@@ -159,6 +152,14 @@ def crawl_multipage(keyword="노트북", max_pages=3):
         referer = page_results[-1]['url'] if page_num > 1 else None
         headers = TlsConfig.build_headers(chrome_version, page_num, referer, cookie_header='')
 
+        # Debug: Show cookies before request
+        try:
+            current_cookies = session.cookies.get_dict()
+            print(f"    [DEBUG] Cookies before request: {len(current_cookies)} items")
+            print(f"    [DEBUG] Cookie names: {', '.join(list(current_cookies.keys())[:3])}{'...' if len(current_cookies) > 3 else ''}")
+        except Exception as e:
+            print(f"    [DEBUG] Could not read session cookies: {e}")
+
         try:
             # Send request using Session (cookies managed automatically)
             start_time = time.time()
@@ -170,12 +171,27 @@ def crawl_multipage(keyword="노트북", max_pages=3):
             )
             elapsed_ms = int((time.time() - start_time) * 1000)
 
+            # Session automatically handles Set-Cookie (curl-cffi feature)
+            # Debug: Show cookies after auto-update
+            try:
+                updated_cookies = session.cookies.get_dict()
+                print(f"    [DEBUG] Cookies after request: {len(updated_cookies)} items")
+                if len(updated_cookies) != len(current_cookies):
+                    print(f"    [DEBUG] ✓ Cookie count changed: {len(current_cookies)} -> {len(updated_cookies)}")
+                    # Show what changed
+                    new_cookies = set(updated_cookies.keys()) - set(current_cookies.keys())
+                    if new_cookies:
+                        print(f"    [DEBUG] New cookies: {', '.join(list(new_cookies)[:3])}{'...' if len(new_cookies) > 3 else ''}")
+            except Exception as e:
+                print(f"    [DEBUG] Could not read updated cookies: {e}")
+
             content = response.text
             content_length = len(content)
 
             # Validate response
             has_products, is_blocked = validate_response(content, page_num)
 
+            print(f"    ─────────────────────────────────────")
             print(f"    Status: {response.status_code}")
             print(f"    Size: {content_length:,} bytes")
             print(f"    Time: {elapsed_ms} ms")
@@ -202,7 +218,7 @@ def crawl_multipage(keyword="노트북", max_pages=3):
 
                 # Delay between pages
                 if page_num < max_pages:
-                    delay = random.uniform(3, 5)
+                    delay = random.uniform(0.5, 1.5)
                     print(f"    Waiting {delay:.1f}s...\n")
                     time.sleep(delay)
             else:
@@ -238,7 +254,7 @@ def crawl_multipage(keyword="노트북", max_pages=3):
             })
             break
 
-    # Save updated cookies to jar file and database
+    # Save updated cookies to database
     print(f"\n{'='*60}")
     print(f"COOKIE UPDATE")
     print(f"{'='*60}")
@@ -285,29 +301,13 @@ def crawl_multipage(keyword="노트북", max_pages=3):
                 final_cookies = data['cookies']  # Use original cookies
                 print(f"Using original cookies: {len(final_cookies)} items")
 
-        # Save to cookie jar file (Netscape format)
-        with open(cookie_jar_file, 'w', encoding='utf-8') as f:
-            f.write("# Netscape HTTP Cookie File\n")
-            f.write("# This is a generated file! Do not edit.\n\n")
-            for cookie in final_cookies:
-                # Netscape format: domain, flag, path, secure, expiration, name, value
-                domain = cookie['domain']
-                flag = 'TRUE' if domain.startswith('.') else 'FALSE'
-                path = cookie['path'] or '/'
-                secure = 'TRUE' if cookie.get('secure') else 'FALSE'
-                expires = str(cookie.get('expires') or 0)
-                name = cookie['name']
-                value = cookie['value']
-                f.write(f"{domain}\t{flag}\t{path}\t{secure}\t{expires}\t{name}\t{value}\n")
-
-        print(f"Cookie jar saved: {cookie_jar_file}")
-
         # Save to database with cookie_type='crawled'
+        # Maintain link to original TLS fingerprint
         cookie_id = db.save_cookies(
             device_name=device_name,
             browser='chrome',
             os_version='Windows 10',
-            tls_fingerprint_id=None,  # Not linked to specific TLS fingerprint
+            tls_fingerprint_id=data['tls_fingerprint_id'],  # Keep original fingerprint link
             cookie_data=final_cookies,
             collected_at=datetime.now(),
             cookie_type='crawled'
