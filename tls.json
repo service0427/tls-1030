@@ -1,13 +1,13 @@
 {
-  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.7390.76.0.0.0 Safari/537.36",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.6533.119.0.0.0 Safari/537.36",
   "ja4": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
   "ja4_r": "t13d1516h2_002f,0035,009c,009d,1301,1302,1303,c013,c014,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0012,0017,001b,0023,002b,002d,0033,44cd,fe0d,ff01_0403,0804,0401,0503,0805,0501,0806,0601",
-  "ja4_o": "t13d1516h2_acb858a92679_7a607d09a553",
-  "ja4_ro": "t13d1516h2_1301,1302,1303,c02b,c02f,c02c,c030,cca9,cca8,c013,c014,009c,009d,002f,0035_0023,0017,0033,000b,002d,000d,002b,ff01,0005,0010,001b,0012,44cd,fe0d,000a,0000_0403,0804,0401,0503,0805,0501,0806,0601",
-  "ja3_hash": "fbccdaf8e71b0b5ce4176b31e54fd25d",
-  "ja3_text": "771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,35-23-51-11-45-13-43-65281-5-16-27-18-17613-65037-10-0,4588-29-23-24,0",
-  "ja3n_hash": "8e19337e7524d2573be54efb2b0784c9",
-  "ja3n_text": "771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-5-10-11-13-16-18-23-27-35-43-45-51-17613-65037-65281,4588-29-23-24,0",
+  "ja4_o": "t13d1516h2_acb858a92679_8a8e01881d81",
+  "ja4_ro": "t13d1516h2_1301,1302,1303,c02b,c02f,c02c,c030,cca9,cca8,c013,c014,009c,009d,002f,0035_002b,0012,000a,0033,000d,0000,fe0d,000b,44cd,001b,0017,0005,0023,002d,ff01,0010_0403,0804,0401,0503,0805,0501,0806,0601",
+  "ja3_hash": "c9d619114f20ab9a36be890044ed0ace",
+  "ja3_text": "771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,43-18-10-51-13-0-65037-11-17613-27-23-5-35-45-65281-16,25497-29-23-24,0",
+  "ja3n_hash": "5fb337e5ddf69d81f215d9c3253a49f4",
+  "ja3n_text": "771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-5-10-11-13-16-18-23-27-35-43-45-51-17613-65037-65281,25497-29-23-24,0",
   "akamai_hash": "52d84b11737d980aef856699f885ca86",
   "akamai_text": "1:65536;2:0;4:6291456;6:262144|15663105|0|m,a,s,p",
   "tls": {
@@ -16,8 +16,8 @@
       "name": "TLS_AES_128_GCM_SHA256"
     },
     "key_exchange": {
-      "id": 4588,
-      "name": "X25519MLKEM768"
+      "id": 29,
+      "name": "x25519"
     },
     "connection_version": {
       "id": 772,
@@ -31,11 +31,11 @@
       "id": 771,
       "name": "TLS 1.2"
     },
-    "random": "aceee486aab207d8e62d689fe2aed26cd69c66e01d2655ebdf6a81604092abb9",
-    "session_id": "e5b1a5eedc9f41d52f82f940fa63920bbf3cfa4fba83a57cdcece5b1ff7bc33a",
+    "random": "60ce278fd178e7f44697f97d2f9c31a9aa22f871182b8dd18dab1ccf7aef9c9b",
+    "session_id": "d61b70955a0814e3467293eaf48284d0bd856d726697e7e4d05459b07800b968",
     "cipher_suites": [
       {
-        "id": 10794,
+        "id": 19018,
         "name": "GREASE"
       },
       {
@@ -101,16 +101,60 @@
     ],
     "extensions": [
       {
-        "id": 27242,
+        "id": 64250,
         "name": "GREASE"
       },
       {
-        "id": 35,
-        "name": "session_ticket"
+        "id": 43,
+        "name": "supported_versions",
+        "data": {
+          "supported_versions": [
+            {
+              "id": 2570,
+              "name": "GREASE"
+            },
+            {
+              "id": 772,
+              "name": "TLS 1.3"
+            },
+            {
+              "id": 771,
+              "name": "TLS 1.2"
+            }
+          ]
+        }
       },
       {
-        "id": 23,
-        "name": "extended_main_secret"
+        "id": 18,
+        "name": "signed_certificate_timestamp"
+      },
+      {
+        "id": 10,
+        "name": "supported_groups",
+        "data": {
+          "named_groups": [
+            {
+              "id": 64250,
+              "name": "GREASE"
+            },
+            {
+              "id": 25497,
+              "name": "X25519Kyber768Draft00 (OBSOLETE)"
+            },
+            {
+              "id": 29,
+              "name": "x25519"
+            },
+            {
+              "id": 23,
+              "name": "secp256r1"
+            },
+            {
+              "id": 24,
+              "name": "secp384r1"
+            }
+          ]
+        }
       },
       {
         "id": 51,
@@ -118,43 +162,19 @@
         "data": {
           "named_groups": [
             {
-              "id": 60138,
+              "id": 64250,
               "name": "GREASE",
               "key_exchange_length": 1
             },
             {
-              "id": 4588,
-              "name": "X25519MLKEM768",
+              "id": 25497,
+              "name": "X25519Kyber768Draft00 (OBSOLETE)",
               "key_exchange_length": 1216
             },
             {
               "id": 29,
               "name": "x25519",
               "key_exchange_length": 32
-            }
-          ]
-        }
-      },
-      {
-        "id": 11,
-        "name": "ec_point_formats",
-        "data": {
-          "ec_point_format_list": [
-            {
-              "id": 0,
-              "name": "uncompressed"
-            }
-          ]
-        }
-      },
-      {
-        "id": 45,
-        "name": "psk_key_exchange_modes",
-        "data": {
-          "ke_modes": [
-            {
-              "id": 1,
-              "name": "psk_dhe_ke"
             }
           ]
         }
@@ -200,50 +220,47 @@
         }
       },
       {
-        "id": 43,
-        "name": "supported_versions",
+        "id": 0,
+        "name": "server_name",
         "data": {
-          "supported_versions": [
+          "server_name": "tls.browserleaks.com"
+        }
+      },
+      {
+        "id": 65037,
+        "name": "encrypted_client_hello",
+        "data": {
+          "kdf_id": {
+            "id": 1,
+            "name": "HKDF-SHA256"
+          },
+          "aead_id": {
+            "id": 1,
+            "name": "AES-128-GCM"
+          },
+          "config_id": 245,
+          "enc_length": 32,
+          "payload_length": 240
+        }
+      },
+      {
+        "id": 11,
+        "name": "ec_point_formats",
+        "data": {
+          "ec_point_format_list": [
             {
-              "id": 10794,
-              "name": "GREASE"
-            },
-            {
-              "id": 772,
-              "name": "TLS 1.3"
-            },
-            {
-              "id": 771,
-              "name": "TLS 1.2"
+              "id": 0,
+              "name": "uncompressed"
             }
           ]
         }
       },
       {
-        "id": 65281,
-        "name": "renegotiation_info"
-      },
-      {
-        "id": 5,
-        "name": "status_request",
+        "id": 17613,
+        "name": "application_settings",
         "data": {
-          "status_type": [
-            {
-              "id": 1,
-              "name": "ocsp"
-            }
-          ],
-          "responder_id_list": 0,
-          "request_extensions": 0
-        }
-      },
-      {
-        "id": 16,
-        "name": "application_layer_protocol_negotiation",
-        "data": {
-          "protocol_name_list": [
-            "h2",
-            "http/1.1"
+          "supported_protocols": [
+            "h2"
           ]
         }
       },
@@ -260,72 +277,55 @@
         }
       },
       {
-        "id": 18,
-        "name": "signed_certificate_timestamp"
+        "id": 23,
+        "name": "extended_main_secret"
       },
       {
-        "id": 17613,
-        "name": "application_settings",
+        "id": 5,
+        "name": "status_request",
         "data": {
-          "supported_protocols": [
-            "h2"
-          ]
+          "status_type": [
+            {
+              "id": 1,
+              "name": "ocsp"
+            }
+          ],
+          "responder_id_list": 0,
+          "request_extensions": 0
         }
       },
       {
-        "id": 65037,
-        "name": "encrypted_client_hello",
-        "data": {
-          "kdf_id": {
-            "id": 1,
-            "name": "HKDF-SHA256"
-          },
-          "aead_id": {
-            "id": 1,
-            "name": "AES-128-GCM"
-          },
-          "config_id": 165,
-          "enc_length": 32,
-          "payload_length": 144
-        }
+        "id": 35,
+        "name": "session_ticket"
       },
       {
-        "id": 10,
-        "name": "supported_groups",
+        "id": 45,
+        "name": "psk_key_exchange_modes",
         "data": {
-          "named_groups": [
+          "ke_modes": [
             {
-              "id": 60138,
-              "name": "GREASE"
-            },
-            {
-              "id": 4588,
-              "name": "X25519MLKEM768"
-            },
-            {
-              "id": 29,
-              "name": "x25519"
-            },
-            {
-              "id": 23,
-              "name": "secp256r1"
-            },
-            {
-              "id": 24,
-              "name": "secp384r1"
+              "id": 1,
+              "name": "psk_dhe_ke"
             }
           ]
         }
       },
       {
-        "id": 0,
-        "name": "server_name",
+        "id": 65281,
+        "name": "renegotiation_info"
+      },
+      {
+        "id": 16,
+        "name": "application_layer_protocol_negotiation",
         "data": {
-          "server_name": "tls.browserleaks.com"
+          "protocol_name_list": [
+            "h2",
+            "http/1.1"
+          ]
         }
       },
       {
-        "id": 14906,
+        "id": 10794,
         "name": "GREASE"
       }
     ]
@@ -370,13 +370,13 @@
       "id": 1,
       "name": "HEADERS",
       "stream_id": 1,
-      "length": 454,
+      "length": 455,
       "headers": {
         ":method": "GET",
         ":authority": "tls.browserleaks.com",
         ":scheme": "https",
         ":path": "/",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.7390.76.0.0.0 Safari/537.36",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.6533.119.0.0.0 Safari/537.36",
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
         "accept-language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
         "accept-encoding": "gzip, deflate, br",
@@ -386,7 +386,7 @@
         "sec-fetch-site": "none",
         "sec-fetch-user": "?1",
         "upgrade-insecure-requests": "1",
-        "sec-ch-ua": "\"Google Chrome\";v=\"141\", \"Chromium\";v=\"141\", \"Not-A.Brand\";v=\"99\"",
+        "sec-ch-ua": "\"Google Chrome\";v=\"127\", \"Chromium\";v=\"127\", \"Not-A.Brand\";v=\"99\"",
         "sec-ch-ua-mobile": "?0",
         "sec-ch-ua-platform": "\"Windows\""
       },
