@@ -1,5 +1,5 @@
 """
-TLS Configuration Builder - Build extra_fp for curl-cffi
+TLS Configuration Builder - Build JA3/extra_fp for curl-cffi
 """
 
 from curl_cffi.const import CurlSslVersion
@@ -7,10 +7,82 @@ from curl_cffi.const import CurlSslVersion
 
 class TlsConfig:
     @staticmethod
+    def build_ja3_string(tls_data):
+        """
+        Build JA3 string from TLS data
+        Format: SSLVersion,Ciphers,Extensions,EllipticCurves,EllipticCurvePointFormats
+
+        Args:
+            tls_data: TLS data from database
+
+        Returns:
+            str: JA3 string (or None if ja3_text exists in DB)
+        """
+        # Use ja3_text from DB if available
+        ja3_text = tls_data.get('ja3_text')
+        if ja3_text:
+            return ja3_text
+
+        # Otherwise build from components
+        # 1. SSL Version (771 = TLS 1.2, 772 = TLS 1.3)
+        tls_version = tls_data.get('tls_version', 'TLS 1.3')
+        if '1.3' in str(tls_version):
+            ssl_ver = '772'
+        elif '1.2' in str(tls_version):
+            ssl_ver = '771'
+        else:
+            ssl_ver = '771'
+
+        # 2. Cipher Suites (filter out GREASE)
+        ciphers = []
+        for cipher in tls_data.get('cipher_suites', []):
+            cipher_id = cipher.get('id')
+            cipher_name = cipher.get('name', '')
+            if cipher_id and 'GREASE' not in cipher_name:
+                ciphers.append(str(cipher_id))
+        cipher_str = '-'.join(ciphers)
+
+        # 3. Extensions (filter out GREASE)
+        extensions = []
+        for ext in tls_data.get('extensions', []):
+            ext_id = ext.get('id')
+            ext_name = ext.get('name', '')
+            if ext_id and 'GREASE' not in ext_name:
+                extensions.append(str(ext_id))
+        ext_str = '-'.join(extensions)
+
+        # 4. Supported Groups (Elliptic Curves)
+        # Map names to IDs
+        curve_map = {
+            'X25519': '29',
+            'x25519': '29',
+            'secp256r1': '23',
+            'prime256v1': '23',
+            'secp384r1': '24',
+            'secp521r1': '25',
+            'X25519Kyber768Draft00': '25497',  # Hybrid PQC
+        }
+
+        groups = []
+        for group in tls_data.get('supported_groups', []):
+            if 'GREASE' in group:
+                continue
+            group_id = curve_map.get(group, '')
+            if group_id:
+                groups.append(group_id)
+        group_str = '-'.join(groups)
+
+        # 5. EC Point Formats (usually just "0" for uncompressed)
+        point_format = '0'
+
+        # Build JA3 string
+        ja3 = f"{ssl_ver},{cipher_str},{ext_str},{group_str},{point_format}"
+        return ja3
+
+    @staticmethod
     def build_extra_fp(tls_data):
         """
-        Build minimal extra_fp from TLS data
-        (curl_cffi 0.13.0 supports limited parameters)
+        Build extra_fp from TLS data for fine-tuning
 
         Args:
             tls_data: TLS data from database
@@ -27,9 +99,17 @@ class TlsConfig:
         elif '1.2' in str(tls_version):
             extra_fp['tls_min_version'] = CurlSslVersion.TLSv1_2
 
-        # Enable GREASE and extension permutation for Chrome 110+
+        # Enable GREASE and extension permutation
         extra_fp['tls_grease'] = True
         extra_fp['tls_permute_extensions'] = True
+
+        # Signature algorithms
+        sig_algs = tls_data.get('signature_algorithms', [])
+        if sig_algs:
+            extra_fp['tls_signature_algorithms'] = sig_algs
+
+        # Certificate compression (default: brotli)
+        extra_fp['tls_cert_compression'] = 'brotli'
 
         return extra_fp
 

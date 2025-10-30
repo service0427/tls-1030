@@ -23,13 +23,14 @@ from modules import DbManager, TlsConfig, CookieHandler, FileManager
 from utils import generate_traceid
 
 
-def verify_tls(session, extra_fp, headers, output_file="tls.json"):
+def verify_tls(session, ja3_string, extra_fp, headers, output_file="tls.json"):
     """
     Verify TLS fingerprint by connecting to browserleaks.com
     Saves JSON response for TLS verification
 
     Args:
         session: curl-cffi Session object
+        ja3_string: JA3 fingerprint string
         extra_fp: TLS fingerprint configuration
         headers: Request headers
         output_file: Output JSON file path
@@ -45,11 +46,13 @@ def verify_tls(session, extra_fp, headers, output_file="tls.json"):
 
     try:
         print(f"  Connecting to: {verify_url}")
+        print(f"  Using JA3: {ja3_string[:60]}...")
         start_time = time.time()
 
         response = session.get(
             verify_url,
             headers=headers,
+            ja3=ja3_string,
             extra_fp=extra_fp,
             timeout=10
         )
@@ -102,25 +105,16 @@ def compare_tls_data(db_tls_data, browserleaks_data):
     """
     print(f"\n{'='*60}")
     print(f"TLS COMPARISON")
-    print(f"{'='*60}\n")
+    print(f"{'='*60}")
+    print(f"  Note: JA3 Hash changes per connection (GREASE randomization)")
+    print(f"        Comparing core TLS components instead...\n")
 
     differences = []
 
     # Extract browserleaks TLS section
     bl_tls = browserleaks_data.get('tls', {})
 
-    # 1. Compare JA3 Hash
-    db_ja3 = db_tls_data.get('ja3_hash', '')
-    bl_ja3 = browserleaks_data.get('ja3_hash', '')
-
-    if db_ja3 != bl_ja3:
-        differences.append({
-            'field': 'JA3 Hash',
-            'db_value': db_ja3,
-            'actual_value': bl_ja3
-        })
-
-    # 2. Compare TLS Version
+    # 1. Compare TLS Version
     db_version = db_tls_data.get('tls_version', '')
     bl_version = bl_tls.get('connection_version', {}).get('name', '')
 
@@ -131,7 +125,7 @@ def compare_tls_data(db_tls_data, browserleaks_data):
             'actual_value': bl_version
         })
 
-    # 3. Compare Cipher Suites (names only)
+    # 2. Compare Cipher Suites (names only, excluding GREASE)
     db_ciphers = [c.get('name', '') for c in db_tls_data.get('cipher_suites', [])]
     bl_ciphers = [c.get('name', '') for c in bl_tls.get('cipher_suites', [])]
 
@@ -146,16 +140,19 @@ def compare_tls_data(db_tls_data, browserleaks_data):
             'actual_value': f"{len(bl_ciphers_filtered)} items:\n      " + '\n      '.join(bl_ciphers_filtered)
         })
 
-    # 4. Compare Supported Groups
-    db_groups = db_tls_data.get('supported_groups', [])
+    # 3. Compare Supported Groups (excluding GREASE)
+    db_groups_raw = db_tls_data.get('supported_groups', [])
+    db_groups = [g for g in db_groups_raw if 'GREASE' not in g.upper()]
 
     # Extract from extensions in browserleaks data
-    bl_groups = []
+    bl_groups_raw = []
     for ext in bl_tls.get('extensions', []):
         if ext.get('name') == 'supported_groups':
             named_groups = ext.get('data', {}).get('named_groups', [])
-            bl_groups = [g.get('name', '') for g in named_groups]
+            bl_groups_raw = [g.get('name', '') for g in named_groups]
             break
+
+    bl_groups = [g for g in bl_groups_raw if 'GREASE' not in g.upper()]
 
     if db_groups != bl_groups:
         differences.append({
@@ -164,7 +161,7 @@ def compare_tls_data(db_tls_data, browserleaks_data):
             'actual_value': f"{len(bl_groups)} items:\n      " + '\n      '.join(bl_groups)
         })
 
-    # 5. Compare Signature Algorithms
+    # 4. Compare Signature Algorithms
     db_sig_algs = db_tls_data.get('signature_algorithms', [])
 
     # Extract from extensions in browserleaks data
@@ -184,10 +181,10 @@ def compare_tls_data(db_tls_data, browserleaks_data):
 
     # Print results
     if not differences:
-        print(f"  ✓ TLS fingerprints match perfectly!\n")
+        print(f"  [OK] TLS fingerprints match perfectly!\n")
         return True
     else:
-        print(f"  ✗ Found {len(differences)} difference(s):\n")
+        print(f"  [DIFF] Found {len(differences)} difference(s):\n")
 
         for diff in differences:
             print(f"  [{diff['field']}]")
@@ -289,10 +286,15 @@ def crawl_multipage(keyword="노트북", max_pages=3):
 
     # Build TLS configuration
     print(f"\n[2/3] Building TLS configuration...")
+
+    # Build JA3 string from DB TLS data
+    ja3_string = TlsConfig.build_ja3_string(data['tls_data'])
     extra_fp = TlsConfig.build_extra_fp(data['tls_data'])
     cookie_dict = CookieHandler.to_dict(data['cookies'])
 
     print(f"  TLS version: {data['tls_data'].get('tls_version')}")
+    print(f"  JA3 string: {ja3_string[:80]}{'...' if len(ja3_string) > 80 else ''}")
+    print(f"  JA3 hash (DB): {data['ja3_hash']}")
     print(f"  extra_fp: {extra_fp}")
 
     # Create Session for automatic cookie management
@@ -310,7 +312,7 @@ def crawl_multipage(keyword="노트북", max_pages=3):
 
     # Verify TLS fingerprint before crawling
     verify_headers = TlsConfig.build_headers(chrome_version, 1, None, cookie_header='')
-    browserleaks_data = verify_tls(session, extra_fp, verify_headers, "tls.json")
+    browserleaks_data = verify_tls(session, ja3_string, extra_fp, verify_headers, "tls.json")
 
     # Compare DB TLS data with actual browserleaks data
     if browserleaks_data:
@@ -349,6 +351,7 @@ def crawl_multipage(keyword="노트북", max_pages=3):
             response = session.get(
                 url,
                 headers=headers,
+                ja3=ja3_string,
                 extra_fp=extra_fp,
                 timeout=10
             )
