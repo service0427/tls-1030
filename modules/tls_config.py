@@ -6,6 +6,12 @@ from curl_cffi.const import CurlSslVersion
 
 
 class TlsConfig:
+    # Extensions not supported by curl-cffi (as of v0.13.0)
+    UNSUPPORTED_EXTENSIONS = {
+        51764,  # trust_anchors (Chrome 141+)
+        # Add more unsupported extensions here as needed
+    }
+
     @staticmethod
     def build_ja3_string(tls_data):
         """
@@ -16,11 +22,25 @@ class TlsConfig:
             tls_data: TLS data from database
 
         Returns:
-            str: JA3 string (or None if ja3_text exists in DB)
+            str: JA3 string with unsupported extensions filtered out
         """
-        # Use ja3_text from DB if available
+        # Use ja3_text from DB if available, but filter unsupported extensions
         ja3_text = tls_data.get('ja3_text')
         if ja3_text:
+            # Parse JA3: version,ciphers,extensions,groups,point_formats
+            parts = ja3_text.split(',')
+            if len(parts) == 5:
+                version, ciphers, extensions, groups, point_formats = parts
+
+                # Filter out unsupported extensions
+                ext_ids = [ext_id for ext_id in extensions.split('-')
+                          if ext_id and int(ext_id) not in TlsConfig.UNSUPPORTED_EXTENSIONS]
+
+                # Rebuild JA3 string
+                filtered_ja3 = f"{version},{ciphers},{'-'.join(ext_ids)},{groups},{point_formats}"
+                return filtered_ja3
+
+            # If parsing fails, return as-is
             return ja3_text
 
         # Otherwise build from components
@@ -42,12 +62,12 @@ class TlsConfig:
                 ciphers.append(str(cipher_id))
         cipher_str = '-'.join(ciphers)
 
-        # 3. Extensions (filter out GREASE)
+        # 3. Extensions (filter out GREASE and unsupported extensions)
         extensions = []
         for ext in tls_data.get('extensions', []):
             ext_id = ext.get('id')
             ext_name = ext.get('name', '')
-            if ext_id and 'GREASE' not in ext_name:
+            if ext_id and 'GREASE' not in ext_name and ext_id not in TlsConfig.UNSUPPORTED_EXTENSIONS:
                 extensions.append(str(ext_id))
         ext_str = '-'.join(extensions)
 

@@ -292,6 +292,11 @@ def crawl_multipage(keyword="노트북", max_pages=3):
     extra_fp = TlsConfig.build_extra_fp(data['tls_data'])
     cookie_dict = CookieHandler.to_dict(data['cookies'])
 
+    # Check if extensions were filtered
+    original_ja3 = data['tls_data'].get('ja3_text', '')
+    if original_ja3 and original_ja3 != ja3_string:
+        print(f"  Note: Filtered unsupported TLS extensions for compatibility")
+
     print(f"  TLS version: {data['tls_data'].get('tls_version')}")
     print(f"  JA3 string: {ja3_string[:80]}{'...' if len(ja3_string) > 80 else ''}")
     print(f"  JA3 hash (DB): {data['ja3_hash']}")
