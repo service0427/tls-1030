@@ -23,6 +23,181 @@ from modules import DbManager, TlsConfig, CookieHandler, FileManager
 from utils import generate_traceid
 
 
+def verify_tls(session, extra_fp, headers, output_file="tls.json"):
+    """
+    Verify TLS fingerprint by connecting to browserleaks.com
+    Saves JSON response for TLS verification
+
+    Args:
+        session: curl-cffi Session object
+        extra_fp: TLS fingerprint configuration
+        headers: Request headers
+        output_file: Output JSON file path
+
+    Returns:
+        dict: TLS data from browserleaks, or None if failed
+    """
+    print(f"\n{'='*60}")
+    print(f"TLS VERIFICATION")
+    print(f"{'='*60}\n")
+
+    verify_url = "https://tls.browserleaks.com/"
+
+    try:
+        print(f"  Connecting to: {verify_url}")
+        start_time = time.time()
+
+        response = session.get(
+            verify_url,
+            headers=headers,
+            extra_fp=extra_fp,
+            timeout=10
+        )
+
+        elapsed_ms = int((time.time() - start_time) * 1000)
+
+        if response.status_code == 200:
+            # Response is pure JSON
+            tls_data = json.loads(response.text)
+            content_length = len(response.text)
+
+            print(f"  Status: {response.status_code}")
+            print(f"  Time: {elapsed_ms} ms")
+            print(f"  Size: {content_length:,} bytes")
+            print(f"  JA3 Hash: {tls_data.get('ja3_hash', 'Unknown')}")
+            print(f"  Akamai Hash: {tls_data.get('akamai_hash', 'Unknown')}")
+
+            # Save JSON to file
+            output_path = Path(__file__).parent / output_file
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump(tls_data, f, indent=2, ensure_ascii=False)
+
+            print(f"  Saved to: {output_path}")
+            print(f"  Result: SUCCESS\n")
+            return tls_data
+        else:
+            print(f"  Status: {response.status_code}")
+            print(f"  Result: FAILED\n")
+            return None
+
+    except Exception as e:
+        print(f"  ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        print(f"  Result: FAILED\n")
+        return None
+
+
+def compare_tls_data(db_tls_data, browserleaks_data):
+    """
+    Compare DB TLS data with browserleaks TLS data
+    Print only differences
+
+    Args:
+        db_tls_data: TLS data from database
+        browserleaks_data: TLS data from browserleaks.com
+
+    Returns:
+        bool: True if identical, False if differences found
+    """
+    print(f"\n{'='*60}")
+    print(f"TLS COMPARISON")
+    print(f"{'='*60}\n")
+
+    differences = []
+
+    # Extract browserleaks TLS section
+    bl_tls = browserleaks_data.get('tls', {})
+
+    # 1. Compare JA3 Hash
+    db_ja3 = db_tls_data.get('ja3_hash', '')
+    bl_ja3 = browserleaks_data.get('ja3_hash', '')
+
+    if db_ja3 != bl_ja3:
+        differences.append({
+            'field': 'JA3 Hash',
+            'db_value': db_ja3,
+            'actual_value': bl_ja3
+        })
+
+    # 2. Compare TLS Version
+    db_version = db_tls_data.get('tls_version', '')
+    bl_version = bl_tls.get('connection_version', {}).get('name', '')
+
+    if db_version != bl_version:
+        differences.append({
+            'field': 'TLS Version',
+            'db_value': db_version,
+            'actual_value': bl_version
+        })
+
+    # 3. Compare Cipher Suites (names only)
+    db_ciphers = [c.get('name', '') for c in db_tls_data.get('cipher_suites', [])]
+    bl_ciphers = [c.get('name', '') for c in bl_tls.get('cipher_suites', [])]
+
+    # Filter out GREASE
+    db_ciphers_filtered = [c for c in db_ciphers if c != 'GREASE']
+    bl_ciphers_filtered = [c for c in bl_ciphers if c != 'GREASE']
+
+    if db_ciphers_filtered != bl_ciphers_filtered:
+        differences.append({
+            'field': 'Cipher Suites',
+            'db_value': f"{len(db_ciphers_filtered)} items:\n      " + '\n      '.join(db_ciphers_filtered),
+            'actual_value': f"{len(bl_ciphers_filtered)} items:\n      " + '\n      '.join(bl_ciphers_filtered)
+        })
+
+    # 4. Compare Supported Groups
+    db_groups = db_tls_data.get('supported_groups', [])
+
+    # Extract from extensions in browserleaks data
+    bl_groups = []
+    for ext in bl_tls.get('extensions', []):
+        if ext.get('name') == 'supported_groups':
+            named_groups = ext.get('data', {}).get('named_groups', [])
+            bl_groups = [g.get('name', '') for g in named_groups]
+            break
+
+    if db_groups != bl_groups:
+        differences.append({
+            'field': 'Supported Groups',
+            'db_value': f"{len(db_groups)} items:\n      " + '\n      '.join(db_groups),
+            'actual_value': f"{len(bl_groups)} items:\n      " + '\n      '.join(bl_groups)
+        })
+
+    # 5. Compare Signature Algorithms
+    db_sig_algs = db_tls_data.get('signature_algorithms', [])
+
+    # Extract from extensions in browserleaks data
+    bl_sig_algs = []
+    for ext in bl_tls.get('extensions', []):
+        if ext.get('name') == 'signature_algorithms':
+            algorithms = ext.get('data', {}).get('algorithms', [])
+            bl_sig_algs = [a.get('name', '') for a in algorithms]
+            break
+
+    if db_sig_algs != bl_sig_algs:
+        differences.append({
+            'field': 'Signature Algorithms',
+            'db_value': f"{len(db_sig_algs)} items:\n      " + '\n      '.join(db_sig_algs),
+            'actual_value': f"{len(bl_sig_algs)} items:\n      " + '\n      '.join(bl_sig_algs)
+        })
+
+    # Print results
+    if not differences:
+        print(f"  ✓ TLS fingerprints match perfectly!\n")
+        return True
+    else:
+        print(f"  ✗ Found {len(differences)} difference(s):\n")
+
+        for diff in differences:
+            print(f"  [{diff['field']}]")
+            print(f"    DB:     {diff['db_value']}")
+            print(f"    Actual: {diff['actual_value']}")
+            print()
+
+        return False
+
+
 def build_search_url(keyword, page=1, traceid=None):
     """
     Build Coupang search URL
@@ -132,6 +307,14 @@ def crawl_multipage(keyword="노트북", max_pages=3):
 
     # Debug: Show initial cookies
     print(f"  Initial cookies: {', '.join(list(cookie_dict.keys())[:5])}{'...' if len(cookie_dict) > 5 else ''}")
+
+    # Verify TLS fingerprint before crawling
+    verify_headers = TlsConfig.build_headers(chrome_version, 1, None, cookie_header='')
+    browserleaks_data = verify_tls(session, extra_fp, verify_headers, "tls.json")
+
+    # Compare DB TLS data with actual browserleaks data
+    if browserleaks_data:
+        compare_tls_data(data['tls_data'], browserleaks_data)
 
     # Start crawling
     print(f"\n[3/3] Crawling {max_pages} pages...")
