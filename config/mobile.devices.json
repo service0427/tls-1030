@@ -1,0 +1,34 @@
+{
+  "android_devices": [
+    {
+      "device": "Samsung Galaxy S23",
+      "os_version": "13.0",
+      "browser": "Chrome",
+      "browser_version": "latest",
+      "bs_device_name": "Samsung Galaxy S23"
+    },
+    {
+      "device": "Samsung Galaxy S24",
+      "os_version": "14.0",
+      "browser": "Chrome",
+      "browser_version": "latest",
+      "bs_device_name": "Samsung Galaxy S24"
+    }
+  ],
+  "ios_devices": [
+    {
+      "device": "iPhone 15",
+      "os_version": "17.0",
+      "browser": "Safari",
+      "browser_version": "latest",
+      "bs_device_name": "iPhone 15"
+    },
+    {
+      "device": "iPhone 15 Pro Max",
+      "os_version": "17.0",
+      "browser": "Safari",
+      "browser_version": "latest",
+      "bs_device_name": "iPhone 15 Pro Max"
+    }
+  ]
+}

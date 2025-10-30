@@ -1,0 +1,118 @@
+[
+  {
+    "timestamp": "2025-10-31T00:05:57.918949",
+    "manufacturer": "samsung",
+    "model": "Galaxy A51",
+    "browser": "android",
+    "os_version": "10.0",
+    "device_name": "Samsung Galaxy A51",
+    "os": "android",
+    "real_mobile": true
+  },
+  {
+    "timestamp": "2025-10-31T00:22:24.204185",
+    "manufacturer": "samsung",
+    "model": "Galaxy S25 Ultra",
+    "browser": "android",
+    "os_version": "15.0",
+    "device_name": "Samsung Galaxy S25 Ultra",
+    "os": "android",
+    "real_mobile": true
+  },
+  {
+    "timestamp": "2025-10-31T00:23:38.036830",
+    "manufacturer": "samsung",
+    "model": "Galaxy S25 Ultra",
+    "browser": "android",
+    "os_version": "15.0",
+    "device_name": "Samsung Galaxy S25 Ultra",
+    "os": "android",
+    "real_mobile": true
+  },
+  {
+    "timestamp": "2025-10-31T00:31:27.664772",
+    "manufacturer": "samsung",
+    "model": "Galaxy S21 Plus",
+    "browser": "android",
+    "os_version": "11.0",
+    "device_name": "Samsung Galaxy S21 Plus",
+    "os": "android",
+    "real_mobile": true
+  },
+  {
+    "timestamp": "2025-10-31T00:33:47.933210",
+    "manufacturer": "samsung",
+    "model": "Galaxy S21 Plus",
+    "browser": "android",
+    "os_version": "11.0",
+    "device_name": "Samsung Galaxy S21 Plus",
+    "os": "android",
+    "real_mobile": true
+  },
+  {
+    "selection_id": 1,
+    "timestamp": "2025-10-31T00:39:28.705506",
+    "manufacturer": "samsung",
+    "model": "Galaxy S24",
+    "browser": "android",
+    "os_version": "14.0",
+    "device_name": "Samsung Galaxy S24",
+    "os": "android",
+    "real_mobile": true
+  },
+  {
+    "selection_id": 2,
+    "timestamp": "2025-10-31T00:40:29.851388",
+    "manufacturer": "samsung",
+    "model": "Galaxy S24",
+    "browser": "android",
+    "os_version": "14.0",
+    "device_name": "Samsung Galaxy S24",
+    "os": "android",
+    "real_mobile": true
+  },
+  {
+    "selection_id": 3,
+    "timestamp": "2025-10-31T01:26:23.559195",
+    "manufacturer": "apple",
+    "model": "iPhone 13",
+    "browser": "iphone",
+    "os_version": "18",
+    "device_name": "iPhone 13",
+    "os": "ios",
+    "real_mobile": true
+  },
+  {
+    "selection_id": 4,
+    "timestamp": "2025-10-31T01:28:03.862325",
+    "manufacturer": "samsung",
+    "model": "Galaxy S24",
+    "browser": "samsung",
+    "os_version": "14.0",
+    "device_name": "Samsung Galaxy S24",
+    "os": "android",
+    "real_mobile": true
+  },
+  {
+    "selection_id": 5,
+    "timestamp": "2025-10-31T01:29:08.022213",
+    "manufacturer": "samsung",
+    "model": "Galaxy S24",
+    "browser": "android",
+    "os_version": "14.0",
+    "device_name": "Samsung Galaxy S24",
+    "os": "android",
+    "real_mobile": true
+  },
+  {
+    "selection_id": 6,
+    "timestamp": "2025-10-31T01:30:52.363935",
+    "manufacturer": "samsung",
+    "model": "Galaxy S24",
+    "browser": "android",
+    "os_version": "14.0",
+    "device_name": "Samsung Galaxy S24",
+    "os": "android",
+    "real_mobile": true
+  }
+]

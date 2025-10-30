@@ -453,24 +453,12 @@ if (!input) {
 
             # Method 2: JavaScript fallback - get cookies via document.cookie
             try:
+                from .cookie_formatter import CookieFormatter
+
                 cookie_string = await self.page.evaluate('document.cookie')
 
-                # Parse cookie string
-                cookie_list = []
-                if cookie_string:
-                    for cookie_pair in cookie_string.split('; '):
-                        if '=' in cookie_pair:
-                            name, value = cookie_pair.split('=', 1)
-                            cookie_list.append({
-                                'name': name,
-                                'value': value,
-                                'domain': '.coupang.com',
-                                'path': '/',
-                                'expires': -1,
-                                'httpOnly': False,
-                                'secure': True,
-                                'sameSite': 'None'
-                            })
+                # Parse cookie string using CookieFormatter
+                cookie_list = CookieFormatter.parse_js_cookies(cookie_string)
 
                 print(f"[CookieCollector] Collected {len(cookie_list)} cookies via JavaScript")
                 return cookie_list
@@ -576,70 +564,19 @@ if (!input) {
             tls_extractor = TlsExtractor(self.page)
             tls_info = await tls_extractor.extract()
 
-            # 6. Convert cookies to serializable format
-            cookies_data = []
-            for cookie in cookie_list:
-                # Handle both object and dict formats
-                if isinstance(cookie, dict):
-                    cookies_data.append({
-                        'name': cookie.get('name'),
-                        'value': cookie.get('value'),
-                        'domain': cookie.get('domain'),
-                        'path': cookie.get('path'),
-                        'expires': cookie.get('expires'),
-                        'httpOnly': cookie.get('httpOnly', False),
-                        'secure': cookie.get('secure', False),
-                        'sameSite': cookie.get('sameSite'),
-                    })
-                else:
-                    # Object format
-                    cookies_data.append({
-                        'name': cookie.name,
-                        'value': cookie.value,
-                        'domain': cookie.domain,
-                        'path': cookie.path,
-                        'expires': cookie.expires if hasattr(cookie, 'expires') else None,
-                        'httpOnly': cookie.http_only if hasattr(cookie, 'http_only') else False,
-                        'secure': cookie.secure if hasattr(cookie, 'secure') else False,
-                        'sameSite': str(cookie.same_site) if hasattr(cookie, 'same_site') else None,
-                    })
+            # 6. Convert cookies to serializable format using CookieFormatter
+            from .cookie_formatter import CookieFormatter
+            cookies_data = CookieFormatter.format_cookie_list(cookie_list, formatter_type='nodriver')
 
             # 7. Generate JA3 hash
             ja3_hash = tls_extractor.generate_ja3_hash(tls_info['tls_data'])
 
-            # Convert cookie lists for storage
-            main_cookies_data = []
-            for cookie in main_page_cookies:
-                if isinstance(cookie, dict):
-                    main_cookies_data.append(cookie)
-                else:
-                    main_cookies_data.append({
-                        'name': cookie.name,
-                        'value': cookie.value,
-                        'domain': cookie.domain,
-                        'path': cookie.path,
-                        'expires': cookie.expires if hasattr(cookie, 'expires') else None,
-                        'httpOnly': cookie.http_only if hasattr(cookie, 'http_only') else False,
-                        'secure': cookie.secure if hasattr(cookie, 'secure') else False,
-                        'sameSite': str(cookie.same_site) if hasattr(cookie, 'same_site') else None,
-                    })
+            # Convert cookie lists for storage using CookieFormatter
+            main_cookies_data = CookieFormatter.format_cookie_list(main_page_cookies, formatter_type='nodriver')
 
             search_cookies_data = []
             if search_page_cookies:
-                for cookie in search_page_cookies:
-                    if isinstance(cookie, dict):
-                        search_cookies_data.append(cookie)
-                    else:
-                        search_cookies_data.append({
-                            'name': cookie.name,
-                            'value': cookie.value,
-                            'domain': cookie.domain,
-                            'path': cookie.path,
-                            'expires': cookie.expires if hasattr(cookie, 'expires') else None,
-                            'httpOnly': cookie.http_only if hasattr(cookie, 'http_only') else False,
-                            'secure': cookie.secure if hasattr(cookie, 'secure') else False,
-                            'sameSite': str(cookie.same_site) if hasattr(cookie, 'same_site') else None,
-                        })
+                search_cookies_data = CookieFormatter.format_cookie_list(search_page_cookies, formatter_type='nodriver')
 
             result = {
                 'cookies': cookies_data,

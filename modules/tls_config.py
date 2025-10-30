@@ -8,6 +8,8 @@ from curl_cffi.const import CurlSslVersion
 class TlsConfig:
     # Extensions not supported by curl-cffi (as of v0.13.0)
     UNSUPPORTED_EXTENSIONS = {
+        # NOTE: Extension 0 (server_name) must be INCLUDED in JA3 to avoid toggle errors
+        # If we exclude it, curl-cffi tries to disable it and throws NotImplementedError
         51764,  # trust_anchors (Chrome 141+)
         # Add more unsupported extensions here as needed
     }
@@ -67,7 +69,8 @@ class TlsConfig:
         for ext in tls_data.get('extensions', []):
             ext_id = ext.get('id')
             ext_name = ext.get('name', '')
-            if ext_id and 'GREASE' not in ext_name and ext_id not in TlsConfig.UNSUPPORTED_EXTENSIONS:
+            # Use 'is not None' to allow extension 0 (server_name)
+            if ext_id is not None and 'GREASE' not in ext_name and ext_id not in TlsConfig.UNSUPPORTED_EXTENSIONS:
                 extensions.append(str(ext_id))
         ext_str = '-'.join(extensions)
 
@@ -80,12 +83,23 @@ class TlsConfig:
             'prime256v1': '23',
             'secp384r1': '24',
             'secp521r1': '25',
-            'X25519Kyber768Draft00': '25497',  # Hybrid PQC
+            'X25519Kyber768Draft00': '25497',  # Hybrid PQC (older draft)
+            'X25519MLKEM768': '4588',  # ML-KEM768 (FIPS 203) - Modern hybrid PQC
         }
 
+        # Try top-level first (PC), then extensions (Mobile)
+        groups_raw = tls_data.get('supported_groups', [])
+        if not groups_raw:
+            # Mobile: Extract from extensions
+            for ext in tls_data.get('extensions', []):
+                if ext.get('name') == 'supported_groups':
+                    named_groups = ext.get('data', {}).get('named_groups', [])
+                    groups_raw = [g.get('name', '') for g in named_groups]
+                    break
+
         groups = []
-        for group in tls_data.get('supported_groups', []):
-            if 'GREASE' in group:
+        for group in groups_raw:
+            if 'GREASE' in str(group).upper():
                 continue
             group_id = curve_map.get(group, '')
             if group_id:

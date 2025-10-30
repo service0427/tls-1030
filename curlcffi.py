@@ -23,6 +23,33 @@ from modules import DbManager, TlsConfig, CookieHandler, FileManager
 from utils import generate_traceid
 
 
+def force_tls12_ja3(ja3_string):
+    """
+    Force TLS 1.3 (772) → TLS 1.2 (771)
+
+    curl-cffi JA3 mode only supports TLS 1.2.
+    Some devices use TLS 1.3, so we need to convert.
+
+    Args:
+        ja3_string: Original JA3 string (may be TLS 1.3)
+
+    Returns:
+        str: Modified JA3 string with TLS 1.2 (771)
+    """
+    parts = ja3_string.split(',')
+    if len(parts) == 5:
+        version, ciphers, extensions, groups, point_formats = parts
+
+        # Replace 772 (TLS 1.3) with 771 (TLS 1.2)
+        if version == '772':
+            version = '771'
+            print(f"  [JA3 Fix] TLS 1.3 (772) → TLS 1.2 (771)")
+
+        return f"{version},{ciphers},{extensions},{groups},{point_formats}"
+
+    return ja3_string
+
+
 def verify_tls(session, ja3_string, extra_fp, headers, output_file="tls.json"):
     """
     Verify TLS fingerprint by connecting to browserleaks.com
@@ -289,6 +316,10 @@ def crawl_multipage(keyword="노트북", max_pages=3):
 
     # Build JA3 string from DB TLS data
     ja3_string = TlsConfig.build_ja3_string(data['tls_data'])
+
+    # Force TLS 1.3 -> 1.2 conversion (curl-cffi JA3 mode only supports TLS 1.2)
+    ja3_string = force_tls12_ja3(ja3_string)
+
     extra_fp = TlsConfig.build_extra_fp(data['tls_data'])
     cookie_dict = CookieHandler.to_dict(data['cookies'])
 
